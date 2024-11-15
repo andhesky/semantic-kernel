@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using JsonSchemaMapper;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Diagnostics;
@@ -717,6 +718,7 @@ internal partial class ClientCore
                     {
                         TextContent textContent => ChatMessageContentPart.CreateTextPart(textContent.Text),
                         ImageContent imageContent => GetImageContentItem(imageContent),
+                        AudioContent audioContent => GetAudioContentItem(audioContent),
                         _ => throw new NotSupportedException($"Unsupported chat message content type '{item.GetType()}'.")
                     }))
                 { ParticipantName = message.AuthorName }
@@ -838,6 +840,32 @@ internal partial class ClientCore
         }
 
         return null;
+    }
+
+    private static ChatMessageContentPart GetAudioContentItem(AudioContent audioContent)
+    {
+        string audioType;
+        if (string.Equals("audio/wav", audioContent.MimeType, StringComparison.OrdinalIgnoreCase))
+        {
+            audioType = "wav";
+        }
+        else if((string.Equals("audio/mp3", audioContent.MimeType, StringComparison.OrdinalIgnoreCase)))
+        {
+            audioType = "wav";
+        }
+        else
+        {
+            throw new ArgumentException($"Unknown mime type '{audioContent.MimeType}'. Supported values are 'audio/wav', 'audio/mp3'");
+        }
+
+        if (audioContent.Data is { IsEmpty: false } data)
+        {
+            // TODO this API doesn't exist yet. See https://github.com/openai/openai-dotnet/issues/292
+            return ChatMessageContentPart.CreateInputAudioPart(BinaryData.FromBytes(data), audioType);
+        }
+
+        throw new ArgumentException($"{nameof(ImageContent)} must have Data.");
+
     }
 
     private OpenAIChatMessageContent CreateChatMessageContent(OpenAIChatCompletion completion, string targetModel)
