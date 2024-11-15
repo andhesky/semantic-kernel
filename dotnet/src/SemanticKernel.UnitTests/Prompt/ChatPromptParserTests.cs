@@ -197,6 +197,36 @@ public sealed class ChatPromptParserTests
                               """, c.Content));
     }
 
+    [Fact]
+    public void ItReturnsChatHistoryWithValidContentItemsIncludeAudio()
+    {
+        // Arrange
+        string prompt = GetValidPromptWithDataUriAudioContent();
+
+        // Act
+        bool result = ChatPromptParser.TryParse(prompt, out var chatHistory);
+
+        // Assert
+        Assert.True(result);
+        Assert.NotNull(chatHistory);
+
+        Assert.Collection(chatHistory,
+            c => Assert.Equal("What can I help with?", c.Content),
+            c =>
+            {
+                Assert.Collection(c.Items,
+                    o =>
+                    {
+                        Assert.IsType<AudioContent>(o);
+
+                        var audioContent = (AudioContent)o;
+                        Assert.Equal("data:audio/wav;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAACVJREFUKFNj/KTO/J+BCMA4iBUyQX1A0I10VAizCj1oMdyISyEAFoQbHwTcuS8AAAAASUVORK5CYII=", audioContent.DataUri);
+                        Assert.Equal("audio/wav", audioContent.MimeType);
+                        Assert.NotNull(audioContent.Data);
+                    });
+            });
+    }
+
     private static string GetSimpleValidPrompt()
     {
         return
@@ -318,6 +348,20 @@ public sealed class ChatPromptParserTests
                   https://fake-link-to-image/
                 </image>
               </code>
+            </message>
+
+            """;
+    }
+
+    private static string GetValidPromptWithDataUriAudioContent()
+    {
+        return
+            """
+
+            <message role="assistant">What can I help with?</message>
+
+            <message role='user'>
+                <input_audio>data:audio/wav;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAACVJREFUKFNj/KTO/J+BCMA4iBUyQX1A0I10VAizCj1oMdyISyEAFoQbHwTcuS8AAAAASUVORK5CYII=</input_audio>
             </message>
 
             """;

@@ -16,6 +16,7 @@ internal static class ChatPromptParser
     private const string RoleAttributeName = "role";
     private const string ImageTagName = "image";
     private const string TextTagName = "text";
+    private const string AudioInputTagName = "input_audio";
 
     /// <summary>
     /// Parses a prompt for an XML representation of a <see cref="ChatHistory"/>.
@@ -87,6 +88,10 @@ internal static class ChatPromptParser
             else if (childNode.TagName.Equals(TextTagName, StringComparison.OrdinalIgnoreCase))
             {
                 items.Add(new TextContent(childNode.Content));
+            }
+            else if (childNode.TagName.Equals(AudioInputTagName, StringComparison.OrdinalIgnoreCase))
+            {
+                items.Add(new AudioContent(childNode.Content));
             }
         }
 
